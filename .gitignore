@@ -1,0 +1,4 @@
+venv
+.mypy_cache
+data.json
+.DS_Store
