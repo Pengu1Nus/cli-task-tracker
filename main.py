@@ -18,175 +18,141 @@ def write_to_file(tasks):
         json.dump(tasks, file, indent=4)
 
 
-def add_task(task_description):
+def add_task(description):
     current_time = datetime.now().strftime('%d-%m-%Y %H:%M:%S')
-    task_description = ' '.join(task_description)
     tasks = open_file()
     new_id = tasks[-1]['id'] + 1 if tasks else 1
     new_task = {
         'id': new_id,
-        'description': task_description,
+        'description': description,
         'status': 'todo',
         'createdAt': current_time,
         'updatedAt': current_time,
     }
     tasks.append(new_task)
-
     write_to_file(tasks)
-
     print(f'Task added successfully (ID: {new_task["id"]})')
 
 
-def update_task_description(task_id, task_description):
+def update_task(task_id, description):
     current_time = datetime.now().strftime('%d-%m-%Y %H:%M:%S')
-    task_description = ' '.join(task_description)
-
-    found = False
     tasks = open_file()
-    for elem in tasks:
-        if elem['id'] == int(task_id):
-            elem['description'] = task_description
-            elem['updatedAt'] = current_time
-            found = True
+    for task in tasks:
+        if task['id'] == int(task_id):
+            task['description'] = description
+            task['updatedAt'] = current_time
+            write_to_file(tasks)
             print('Task updated successfully')
-            break
-    if not found:
-        print('Task not found')
-
-    write_to_file(tasks)
+            return
+    print('Task with given ID not found')
 
 
-def update_task_status(command, task_id):
+def update_task_status(task_id, status):
     current_time = datetime.now().strftime('%d-%m-%Y %H:%M:%S')
-    command = command[5:]
     tasks = open_file()
-
-    found = False
-    for elem in tasks:
-        if elem['id'] == int(task_id):
-            elem['status'] = command
-            elem['updatedAt'] = current_time
+    for task in tasks:
+        if task['id'] == int(task_id):
+            task['status'] = status
+            task['updatedAt'] = current_time
+            write_to_file(tasks)
             print('Task status updated successfully')
-            found = True
-            break
-    if not found:
-        print('Task not found')
-
-    write_to_file(tasks)
+            return
+    print('Task with given ID not found')
 
 
 def delete_task(task_id):
-    # TODO: Implement if passing non-integer task_id
-
-    try:
-        task_id = int(task_id[0])
-    except ValueError:
-        print('Please, provide correct task ID')
-        return
-
     tasks = open_file()
-
-    found = False
-    for elem in tasks:
-        if elem['id'] == task_id:
-            tasks.remove(elem)
-            found = True
-            print('Task deleted successfully')
-            break
-    if not found:
-        print('Task not found')
-
-    write_to_file(tasks)
-
-
-def list_tasks(*argument):
-    command = argument[0]
-    if command not in ('done', 'todo', 'in-progress'):
-        print('Invalid command')
-        print('Available commands with list: done, todo, in-progress')
+    updated_tasks = [task for task in tasks if task['id'] != int(task_id)]
+    if len(updated_tasks) == len(tasks):
+        print('Task with given ID not found')
         return
+    write_to_file(updated_tasks)
+    print('Task deleted successfully')
 
-    headers = {
-        'id': 'ID',
-        'description': 'Description',
-        'status': 'Status',
+
+def list_tasks(status=None):
+    valid_statuses = {'todo', 'done', 'in-progress'}
+    if status and status not in valid_statuses:
+        print('Invalid status. Use: todo, done, or in-progress.')
+        return
+    tasks = open_file()
+    headers = ['ID', 'Description', 'Status']
+    if status:
+        tasks = [task for task in tasks if task['status'] == status]
+    task_list = [
+        [task['id'], task['description'], task['status']] for task in tasks
+    ]
+    print(tabulate(task_list, headers=headers, tablefmt='pretty'))
+
+
+def process_command(command, args):
+    def invalid():
+        print('Invalid command or arguments')
+
+    def add():
+        if args:
+            add_task(' '.join(args))
+        else:
+            print('Usage: add <task description>')
+
+    def update():
+        if len(args) > 1:
+            update_task(args[0], ' '.join(args[1:]))
+        else:
+            print('Usage: update <task_id> <new description>')
+
+    def delete():
+        if len(args) == 1:
+            delete_task(args[0])
+        else:
+            print('Usage: delete <task_id>')
+
+    def mark_in_progress():
+        if len(args) == 1:
+            update_task_status(args[0], 'in-progress')
+        else:
+            print('Usage: mark-in-progress <task_id>')
+
+    def mark_done():
+        if len(args) == 1:
+            update_task_status(args[0], 'done')
+        else:
+            print('Usage: mark-done <task_id>')
+
+    def mark_todo():
+        if len(args) == 1:
+            update_task_status(args[0], 'todo')
+        else:
+            print('Usage: mark-todo <task_id>')
+
+    def list_tasks_command():
+        list_tasks(args[0] if args else None)
+
+    def exit_command():
+        exit('Goodbye!')
+
+    commands = {
+        'add': add,
+        'update': update,
+        'delete': delete,
+        'mark-in-progress': mark_in_progress,
+        'mark-done': mark_done,
+        'mark-todo': mark_todo,
+        'list': list_tasks_command,
+        'exit': exit_command,
     }
-    tasks = open_file()
 
-    if len(command) == 0:
-        filtered_tasks = [
-            {key: task[key] for key in ['id', 'description', 'status']}
-            for task in tasks
-        ]
-
-        print(tabulate(filtered_tasks, headers=headers, tablefmt='pretty'))
-    elif len(command) == 1:
-        if command[0] == 'done':
-            filtered_tasks = [
-                {key: task[key] for key in ['id', 'description', 'status']}
-                for task in tasks
-                if command[0] == task['status']
-            ]
-            print(tabulate(filtered_tasks, headers=headers, tablefmt='pretty'))
-        if command[0] == 'todo':
-            filtered_tasks = [
-                {key: task[key] for key in ['id', 'description', 'status']}
-                for task in tasks
-                if command[0] == task['status']
-            ]
-            print(tabulate(filtered_tasks, headers=headers, tablefmt='pretty'))
-        if command[0] == 'in-progress':
-            filtered_tasks = [
-                {key: task[key] for key in ['id', 'description', 'status']}
-                for task in tasks
-                if command[0] == task['status']
-            ]
-            print(tabulate(filtered_tasks, headers=headers, tablefmt='pretty'))
+    commands.get(command, invalid)()
 
 
 def main():
-    user_input = ''
-    while user_input != 'logout':
-        user_input = input('task-cli ').strip()
-        command, *other = user_input.split()
-        if command not in (
-            'add',
-            'update',
-            'delete',
-            'list',
-            'mark',
-            'logout',
-        ):
-            print('Invalid command')
-            print(
-                'Available commands: add, update, delete, list, mark, logout'
-            )
-        if command == 'logout':
-            print('Bye!')
-            break
-        if command == 'add':
-            task_description = other
-            if task_description:
-                add_task(task_description)
-            else:
-                print('Please, provide task description')
-        if command == 'update':
-            task_id, *task_description = other
-            if task_id and task_description:
-                update_task_description(task_id, task_description)
-            else:
-                print('Please, provide correct task data')
-        if command == 'delete':
-            if other:
-                task_id = other
-                delete_task(task_id)
-            else:
-                print('Please, provide task ID to delete')
-        if command == 'list':
-            list_tasks(other)
-        if command.startswith('mark'):
-            task_id = other[0]
-            update_task_status(command, task_id)
+    while True:
+        user_input = input('task-cli > ').strip()
+        if not user_input:
+            continue
+        parts = user_input.split()
+        command, args = parts[0], parts[1:]
+        process_command(command, args)
 
 
 if __name__ == '__main__':
