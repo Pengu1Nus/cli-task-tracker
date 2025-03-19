@@ -2,8 +2,10 @@ import json
 import shutil
 from datetime import datetime
 
-from colorama import Fore, Style
+from colorama import Fore, Style, init
 from tabulate import tabulate
+
+init(autoreset=True)
 
 
 def open_file():
@@ -28,11 +30,7 @@ def validate_task_id(task_id):
     try:
         return int(task_id)
     except ValueError:
-        print(
-            Fore.RED
-            + 'Invalid task ID. Please provide a valid integer.'
-            + Style.RESET_ALL
-        )
+        print(Fore.RED + 'Invalid task ID. Please provide a valid integer.')
         return None
 
 
@@ -49,11 +47,7 @@ def add_task(description):
     }
     tasks.append(new_task)
     write_to_file(tasks)
-    print(
-        Fore.GREEN
-        + f'Task added successfully (ID: {new_task["id"]})'
-        + Style.RESET_ALL
-    )
+    print(Fore.GREEN + f'Task added successfully (ID: {new_task["id"]})')
 
 
 def update_task(task_id, description):
@@ -68,9 +62,9 @@ def update_task(task_id, description):
             task['description'] = description
             task['updatedAt'] = current_time
             write_to_file(tasks)
-            print(Fore.GREEN + 'Task updated successfully' + Style.RESET_ALL)
+            print(Fore.GREEN + 'Task updated successfully')
             return
-    print(Fore.RED + 'Task with given ID not found' + Style.RESET_ALL)
+    print(Fore.RED + 'Task with given ID not found')
 
 
 def update_task_status(task_id, status):
@@ -85,13 +79,9 @@ def update_task_status(task_id, status):
             task['status'] = status
             task['updatedAt'] = current_time
             write_to_file(tasks)
-            print(
-                Fore.GREEN
-                + 'Task status updated successfully'
-                + Style.RESET_ALL
-            )
+            print(Fore.GREEN + 'Task status updated successfully')
             return
-    print(Fore.RED + 'Task with given ID not found' + Style.RESET_ALL)
+    print(Fore.RED + 'Task with given ID not found')
 
 
 def delete_task(task_id):
@@ -102,86 +92,83 @@ def delete_task(task_id):
     tasks = open_file()
     updated_tasks = [task for task in tasks if task['id'] != int(task_id)]
     if len(updated_tasks) == len(tasks):
-        print(Fore.RED + 'Task with given ID not found' + Style.RESET_ALL)
+        print(Fore.RED + 'Task with given ID not found')
         return
     write_to_file(updated_tasks)
-    print(Fore.GREEN + 'Task deleted successfully' + Style.RESET_ALL)
+    print(Fore.GREEN + 'Task deleted successfully')
 
 
 def list_tasks(status=None):
     valid_statuses = {'todo', 'done', 'in-progress'}
+
     if status and status not in valid_statuses:
-        print(
-            Fore.RED
-            + 'Invalid status. Use: todo, done, or in-progress.'
-            + Style.RESET_ALL
-        )
+        print(Fore.RED + 'Invalid status. Use: todo, done, or in-progress.')
         return
+
     tasks = open_file()
-    headers = ['ID', 'Description', 'Status']
+
+    headers = ('ID', 'Description', 'Status')
+
     if status:
         tasks = [task for task in tasks if task['status'] == status]
-    task_list = [
-        [task['id'], task['description'], task['status']] for task in tasks
-    ]
+
+    task_list = []
+    for task in tasks:
+        status_color = {
+            'todo': Fore.MAGENTA,
+            'in-progress': Fore.YELLOW,
+            'done': Fore.GREEN,
+        }.get(task['status'], Fore.WHITE)
+        task_list.append(
+            [
+                str(task['id']),
+                task['description'],
+                status_color + task['status'] + Style.RESET_ALL,
+            ]
+        )
+
     print(tabulate(task_list, headers=headers, tablefmt='pretty'))
 
 
 def process_command(command, args):
     def invalid():
-        print(Fore.RED + 'Invalid command or arguments' + Style.RESET_ALL)
+        print(Fore.RED + 'Invalid command or arguments')
 
     def add():
         if args:
             add_task(' '.join(args))
         else:
-            print(
-                Fore.MAGENTA
-                + 'Usage: add <task description>'
-                + Style.RESET_ALL
-            )
+            print(Fore.MAGENTA + 'Usage: add <task description>')
 
     def update():
         if len(args) > 1:
             update_task(args[0], ' '.join(args[1:]))
         else:
-            print(
-                Fore.MAGENTA
-                + 'Usage: update <task_id> <new description>'
-                + Style.RESET_ALL
-            )
+            print(Fore.MAGENTA + 'Usage: update <task_id> <new description>')
 
     def delete():
         if len(args) == 1:
             delete_task(args[0])
         else:
-            print(Fore.MAGENTA + 'Usage: delete <task_id>' + Style.RESET_ALL)
+            print(Fore.MAGENTA + 'Usage: delete <task_id>')
 
     def mark_in_progress():
         if len(args) == 1:
             update_task_status(args[0], 'in-progress')
         else:
-            print(
-                Fore.MAGENTA
-                + 'Usage: mark-in-progress <task_id>'
-                + Style.RESET_ALL
-            )
+            print(Fore.MAGENTA + 'Usage: mark-in-progress <task_id>')
 
     def mark_done():
         if len(args) == 1:
             update_task_status(args[0], 'done')
         else:
-            print(
-                Fore.MAGENTA + 'Usage: mark-done <task_id>' + Style.RESET_ALL
-            )
+            print(Fore.MAGENTA + 'Usage: mark-done <task_id>')
 
     def mark_todo():
         if len(args) == 1:
             update_task_status(args[0], 'todo')
         else:
-            print(
-                Fore.MAGENTA + 'Usage: mark-todo <task_id>' + Style.RESET_ALL
-            )
+            print(Fore.MAGENTA + 'Usage: mark-todo <task_id>')
 
     def list_tasks_command():
         list_tasks(args[0] if args else None)
