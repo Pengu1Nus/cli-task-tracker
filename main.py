@@ -1,4 +1,5 @@
 import json
+import shutil
 from datetime import datetime
 
 from tabulate import tabulate
@@ -14,8 +15,20 @@ def open_file():
 
 
 def write_to_file(tasks):
-    with open('data.json', 'w') as file:
-        json.dump(tasks, file, indent=4)
+    try:
+        with open('data.json', 'w') as file:
+            json.dump(tasks, file, indent=4)
+        shutil.copy('data.json', 'data_backup.json')
+    except IOError as e:
+        print(f'Error writing to file: {e}')
+
+
+def validate_task_id(task_id):
+    try:
+        return int(task_id)
+    except ValueError:
+        print('Invalid task ID. Please provide a valid integer.')
+        return None
 
 
 def add_task(description):
@@ -35,6 +48,10 @@ def add_task(description):
 
 
 def update_task(task_id, description):
+    task_id = validate_task_id(task_id)
+    if task_id is None:
+        return
+
     current_time = datetime.now().strftime('%d-%m-%Y %H:%M:%S')
     tasks = open_file()
     for task in tasks:
@@ -48,6 +65,10 @@ def update_task(task_id, description):
 
 
 def update_task_status(task_id, status):
+    task_id = validate_task_id(task_id)
+    if task_id is None:
+        return
+
     current_time = datetime.now().strftime('%d-%m-%Y %H:%M:%S')
     tasks = open_file()
     for task in tasks:
@@ -61,6 +82,10 @@ def update_task_status(task_id, status):
 
 
 def delete_task(task_id):
+    task_id = validate_task_id(task_id)
+    if task_id is None:
+        return
+
     tasks = open_file()
     updated_tasks = [task for task in tasks if task['id'] != int(task_id)]
     if len(updated_tasks) == len(tasks):
