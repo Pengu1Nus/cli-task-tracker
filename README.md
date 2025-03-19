@@ -16,7 +16,7 @@ Task CLI is a simple command-line task manager that allows users to add, update,
    cd cli-task-tracker
    ```
 2. Create and activate a virtual environment:
-      Windows:
+      - Windows:
          a. Create a virtual environment:
          ```sh
          python -m venv venv
@@ -25,7 +25,7 @@ Task CLI is a simple command-line task manager that allows users to add, update,
          ```sh
          .\venv\Scripts\activate
          ```
-      macOS/Linux:
+      - macOS/Linux:
          a. Create a virtual environment:
          ```sh
          python3 -m venv venv
