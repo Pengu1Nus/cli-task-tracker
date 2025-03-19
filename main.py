@@ -1,117 +1,147 @@
 import json
 from datetime import datetime
 
+from tabulate import tabulate
 
-def add_task(task_description):
-    current_time = datetime.now().strftime('%d-%m-%Y %H:%M:%S')
+
+def open_file():
     try:
         with open('data.json', 'r') as file:
             tasks = json.load(file)
     except (FileNotFoundError, json.JSONDecodeError):
         tasks = []
+    return tasks
+
+
+def write_to_file(tasks):
+    with open('data.json', 'w') as file:
+        json.dump(tasks, file, indent=4)
+
+
+def add_task(task_description):
+    current_time = datetime.now().strftime('%d-%m-%Y %H:%M:%S')
+    task_description = ' '.join(task_description)
+    tasks = open_file()
     new_id = tasks[-1]['id'] + 1 if tasks else 1
     new_task = {
         'id': new_id,
-        'description': ' '.join(task_description),
+        'description': task_description,
         'status': 'todo',
         'createdAt': current_time,
         'updatedAt': current_time,
     }
     tasks.append(new_task)
 
-    with open('data.json', 'w') as file:
-        json.dump(tasks, file, indent=4)
+    write_to_file(tasks)
 
     print(f'Task added successfully (ID: {new_task["id"]})')
 
 
 def update_task_description(task_id, task_description):
+    current_time = datetime.now().strftime('%d-%m-%Y %H:%M:%S')
     task_description = ' '.join(task_description)
-    try:
-        with open('data.json', 'r') as file:
-            tasks = json.load(file)
-            found = False
-            for elem in tasks:
-                if elem['id'] == int(task_id):
-                    elem['description'] = task_description
-                    found = True
-                    print('Task updated successfully')
-                    break
-            if not found:
-                print('Task not found')
-            with open('data.json', 'w') as file:
-                json.dump(tasks, file, indent=4)
 
-    except (FileNotFoundError, json.JSONDecodeError):
+    found = False
+    tasks = open_file()
+    for elem in tasks:
+        if elem['id'] == int(task_id):
+            elem['description'] = task_description
+            elem['updatedAt'] = current_time
+            found = True
+            print('Task updated successfully')
+            break
+    if not found:
         print('Task not found')
+
+    write_to_file(tasks)
 
 
 def update_task_status(command, task_id):
+    current_time = datetime.now().strftime('%d-%m-%Y %H:%M:%S')
     command = command[5:]
+    tasks = open_file()
 
-    try:
-        with open('data.json', 'r') as file:
-            tasks = json.load(file)
-            found = False
-            for elem in tasks:
-                if elem['id'] == int(task_id):
-                    elem['status'] = command
-                    print('Task status updated successfully')
-                    found = True
-                    break
-            if not found:
-                print('Task not found')
-
-            with open('data.json', 'w') as file:
-                json.dump(tasks, file, indent=4)
-
-    except (FileNotFoundError, json.JSONDecodeError):
+    found = False
+    for elem in tasks:
+        if elem['id'] == int(task_id):
+            elem['status'] = command
+            elem['updatedAt'] = current_time
+            print('Task status updated successfully')
+            found = True
+            break
+    if not found:
         print('Task not found')
+
+    write_to_file(tasks)
 
 
 def delete_task(task_id):
-    task_id = int(task_id[0])
+    # TODO: Implement if passing non-integer task_id
+
     try:
-        with open('data.json', 'r') as file:
-            tasks = json.load(file)
-            found = False
-            for elem in tasks:
-                if elem['id'] == task_id:
-                    tasks.remove(elem)
-                    found = True
-                    print('Task deleted successfully')
-                    break
-            if not found:
-                print('Task not found')
-            with open('data.json', 'w') as file:
-                json.dump(tasks, file, indent=4)
-    except (FileNotFoundError, json.JSONDecodeError):
+        task_id = int(task_id[0])
+    except ValueError:
+        print('Please, provide correct task ID')
+        return
+
+    tasks = open_file()
+
+    found = False
+    for elem in tasks:
+        if elem['id'] == task_id:
+            tasks.remove(elem)
+            found = True
+            print('Task deleted successfully')
+            break
+    if not found:
         print('Task not found')
+
+    write_to_file(tasks)
 
 
 def list_tasks(*argument):
     command = argument[0]
-    try:
-        with open('data.json', 'r') as file:
-            tasks = json.load(file)
-            if len(command) == 0:
-                for task in tasks:
-                    print(task)
-            elif len(command) == 1:
-                if command[0] == 'done':
-                    for task in tasks:
-                        if command[0] == task['status']:
-                            print(task)
-                if command[0] == 'todo':
-                    for task in tasks:
-                        if command[0] == task['status']:
-                            print(task)
-                if command[0] == 'in-progress':
-                    for task in tasks:
-                        if command[0] == task['status']:
-                            print(task)
-    except (FileNotFoundError, json.JSONDecodeError):
-        print('There is no tasks yet')
+    if command not in ('done', 'todo', 'in-progress'):
+        print('Invalid command')
+        print('Available commands with list: done, todo, in-progress')
+        return
+
+    headers = {
+        'id': 'ID',
+        'description': 'Description',
+        'status': 'Status',
+    }
+    tasks = open_file()
+
+    if len(command) == 0:
+        filtered_tasks = [
+            {key: task[key] for key in ['id', 'description', 'status']}
+            for task in tasks
+        ]
+
+        print(tabulate(filtered_tasks, headers=headers, tablefmt='pretty'))
+    elif len(command) == 1:
+        if command[0] == 'done':
+            filtered_tasks = [
+                {key: task[key] for key in ['id', 'description', 'status']}
+                for task in tasks
+                if command[0] == task['status']
+            ]
+            print(tabulate(filtered_tasks, headers=headers, tablefmt='pretty'))
+        if command[0] == 'todo':
+            filtered_tasks = [
+                {key: task[key] for key in ['id', 'description', 'status']}
+                for task in tasks
+                if command[0] == task['status']
+            ]
+            print(tabulate(filtered_tasks, headers=headers, tablefmt='pretty'))
+        if command[0] == 'in-progress':
+            filtered_tasks = [
+                {key: task[key] for key in ['id', 'description', 'status']}
+                for task in tasks
+                if command[0] == task['status']
+            ]
+            print(tabulate(filtered_tasks, headers=headers, tablefmt='pretty'))
 
 
 def main():
@@ -119,7 +149,18 @@ def main():
     while user_input != 'logout':
         user_input = input('task-cli ').strip()
         command, *other = user_input.split()
-
+        if command not in (
+            'add',
+            'update',
+            'delete',
+            'list',
+            'mark',
+            'logout',
+        ):
+            print('Invalid command')
+            print(
+                'Available commands: add, update, delete, list, mark, logout'
+            )
         if command == 'logout':
             print('Bye!')
             break
