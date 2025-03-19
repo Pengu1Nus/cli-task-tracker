@@ -12,14 +12,33 @@ Task CLI is a simple command-line task manager that allows users to add, update,
 ## Installation
 1. Clone the repository:
    ```sh
-   git clone <repository-url>
-   cd task-cli
+   git clone git@github.com:Pengu1Nus/cli-task-tracker.git
+   cd cli-task-tracker
    ```
-2. Install dependencies:
+2. Create and activate a virtual environment:
+      Windows:
+         a. Create a virtual environment:
+         ```sh
+         python -m venv venv
+         ```
+         b. Activate the virtual environment:
+         ```sh
+         .\venv\Scripts\activate
+         ```
+      macOS/Linux:
+         a. Create a virtual environment:
+         ```sh
+         python3 -m venv venv
+         ```
+         b. Activate the virtual environment:
+         ```sh
+         source venv/bin/activate
+         ```
+3. Install dependencies:
    ```sh
    pip install -r requirements.txt
    ```
-3. Run the CLI:
+4. Run the CLI:
    ```sh
    python main.py
    ```
