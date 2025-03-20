@@ -9,6 +9,8 @@ init(autoreset=True)
 
 
 def open_file():
+    """Open the file and return the tasks list."""
+
     try:
         with open('data.json', 'r') as file:
             tasks = json.load(file)
@@ -18,6 +20,8 @@ def open_file():
 
 
 def write_to_file(tasks):
+    """Write the tasks to the file."""
+
     try:
         with open('data.json', 'w') as file:
             json.dump(tasks, file, indent=4)
@@ -27,6 +31,8 @@ def write_to_file(tasks):
 
 
 def validate_task_id(task_id):
+    """Validate the task ID and return the integer value."""
+
     try:
         return int(task_id)
     except ValueError:
@@ -35,6 +41,8 @@ def validate_task_id(task_id):
 
 
 def add_task(description):
+    """Add a new task to the list."""
+
     current_time = datetime.now().strftime('%d-%m-%Y %H:%M:%S')
     tasks = open_file()
     new_id = tasks[-1]['id'] + 1 if tasks else 1
@@ -51,6 +59,8 @@ def add_task(description):
 
 
 def update_task(task_id, description):
+    """Update the task description."""
+
     task_id = validate_task_id(task_id)
     if task_id is None:
         return
@@ -68,6 +78,8 @@ def update_task(task_id, description):
 
 
 def update_task_status(task_id, status):
+    """Update the task status."""
+
     task_id = validate_task_id(task_id)
     if task_id is None:
         return
@@ -85,6 +97,8 @@ def update_task_status(task_id, status):
 
 
 def delete_task(task_id):
+    """Delete the task."""
+
     task_id = validate_task_id(task_id)
     if task_id is None:
         return
@@ -99,6 +113,8 @@ def delete_task(task_id):
 
 
 def list_tasks(status=None):
+    """List all tasks or tasks with a specific status."""
+
     valid_statuses = {'todo', 'done', 'in-progress'}
 
     if status and status not in valid_statuses:
@@ -131,6 +147,8 @@ def list_tasks(status=None):
 
 
 def process_command(command, args):
+    """Process the command and call the appropriate function."""
+
     def invalid():
         print(Fore.RED + 'Invalid command or arguments')
 
@@ -191,6 +209,8 @@ def process_command(command, args):
 
 
 def main():
+    """Main function to run the task-cli."""
+
     while True:
         user_input = input(
             Fore.YELLOW + 'task-cli > ' + Style.RESET_ALL
