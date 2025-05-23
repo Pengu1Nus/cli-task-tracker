@@ -3,3 +3,5 @@ venv
 data.json
 .DS_Store
 data_backup.json
+**/__pycache__/
+__pycache__
