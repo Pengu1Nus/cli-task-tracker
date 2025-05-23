@@ -40,7 +40,10 @@ Task CLI is a simple command-line task manager that allows users to add, update,
    ```sh
    pip install -r requirements.txt
    ```
-4. Run the CLI:
+4. Move to source code directory and Run the CLI:
+   ```sh
+   cd src
+   ```
    ```sh
    python main.py
    ```
