@@ -1,4 +1,5 @@
 from colorama import Fore
+
 from task_operations import (
     add_task,
     delete_task,
@@ -8,32 +9,58 @@ from task_operations import (
 )
 
 
-def process_command(command, args):
-    """Process the command and call the appropriate function."""
+def handle_add(args):
+    if not args:
+        print(Fore.MAGENTA + 'Usage: add <task description>')
+        return
+    add_task(' '.join(args))
 
-    command_handlers = {
-        'add': lambda: add_task(' '.join(args))
-        if args
-        else print(Fore.MAGENTA + 'Usage: add <task description>'),
-        'update': lambda: update_task(args[0], ' '.join(args[1:]))
-        if len(args) > 1
-        else print(Fore.MAGENTA + 'Usage: update <task_id> <new description>'),
-        'delete': lambda: delete_task(args[0])
-        if len(args) == 1
-        else print(Fore.MAGENTA + 'Usage: delete <task_id>'),
-        'mark-in-progress': lambda: update_task_status(args[0], 'in-progress')
-        if len(args) == 1
-        else print(Fore.MAGENTA + 'Usage: mark-in-progress <task_id>'),
-        'mark-done': lambda: update_task_status(args[0], 'done')
-        if len(args) == 1
-        else print(Fore.MAGENTA + 'Usage: mark-done <task_id>'),
-        'mark-todo': lambda: update_task_status(args[0], 'todo')
-        if len(args) == 1
-        else print(Fore.MAGENTA + 'Usage: mark-todo <task_id>'),
-        'list': lambda: list_tasks(args[0] if args else None),
-        'exit': lambda: exit('Goodbye!'),
+
+def handle_update(args):
+    if len(args) < 2:
+        print(Fore.MAGENTA + 'Usage: update <task_id> <new description>')
+        return
+    update_task(args[0], ' '.join(args[1:]))
+
+
+def handle_delete(args):
+    if len(args) != 1:
+        print(Fore.MAGENTA + 'Usage: delete <task_id>')
+        return
+    delete_task(args[0])
+
+
+def handle_mark_status(args, status):
+    if len(args) != 1:
+        print(Fore.MAGENTA + f'Usage: mark-{status} <task_id>')
+        return
+    update_task_status(args[0], status)
+
+
+def handle_list(args):
+    list_tasks(args[0] if args else None)
+
+
+def handle_exit(_):
+    exit('Goodbye!')
+
+
+def handle_invalid(_):
+    print(Fore.RED + 'Invalid command or arguments')
+
+
+def process_command(command, args):
+    command_map = {
+        'add': handle_add,
+        'update': handle_update,
+        'delete': handle_delete,
+        'mark-in-progress': lambda args: handle_mark_status(
+            args, 'in-progress'
+        ),
+        'mark-done': lambda args: handle_mark_status(args, 'done'),
+        'mark-todo': lambda args: handle_mark_status(args, 'todo'),
+        'list': handle_list,
+        'exit': handle_exit,
     }
 
-    command_handlers.get(
-        command, lambda: print(Fore.RED + 'Invalid command or arguments')
-    )()
+    command_map.get(command, handle_invalid)(args)
